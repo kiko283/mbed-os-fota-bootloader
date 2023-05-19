@@ -1,0 +1,31 @@
+{
+    "config": {
+        "flash_size": {
+            "help": "Total flash size on this device (in Bytes)",
+            "value": "256 * 1024"
+        },
+        "bootloader_size": {
+            "help": "The same as target.restrict_size",
+            "value": "0x8000"
+        }
+    },
+    "requires": ["bare-metal", "spif-driver"],
+    "target_overrides": {
+        "*": {
+            "target.c_lib": "small",
+            "target.printf_lib": "minimal-printf",
+            "platform.minimal-printf-enable-floating-point": false,
+            "platform.stdio-minimal-console-only": true,
+            "platform.stdio-baud-rate": 115200,
+            "platform.default-serial-baud-rate": 115200
+        },
+        "NUCLEO_L433RC_P": {
+            "target.restrict_size": "0x8000",
+            "target.components_add": ["SPIF"],
+            "spif-driver.SPI_MOSI": "PA_7",
+            "spif-driver.SPI_MISO": "PA_6",
+            "spif-driver.SPI_CLK":  "PA_5",
+            "spif-driver.SPI_CS":   "PA_4"
+        }
+    }
+}
