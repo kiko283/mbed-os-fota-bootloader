@@ -1,0 +1,42 @@
+name: Release Upload
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Clone mbed-os-fota-main-application repository
+        uses: actions/checkout@v3
+        with:
+          repository: kiko283/mbed-os-fota-main-application
+          token: ${{ secrets.MBED_OS_FOTA_MAIN_APPLICATION_ACCESS_TOKEN }}
+          path: 'mbed-os-fota-main-application'
+        
+#       - name: Clean working directory
+#         run: |
+#           cd ${GITHUB_WORKSPACE}/mbed-os-fota-main-application/
+#           git clean -ffdx
+#           git reset --hard HEAD
+#           cd -
+
+      - name: Update bootloader.bin with the one from the new release
+        run: |
+          [ ! -d ${GITHUB_WORKSPACE}/mbed-os-fota-main-application/bootloader ] && mkdir -p ${GITHUB_WORKSPACE}/mbed-os-fota-main-application/bootloader
+          releaseAssetUrl="$(curl -sH 'Accept: application/vnd.github.v3+json' \
+            "https://api.github.com/repos/${{ github.repository }}/releases/${{ github.event.release.id }}/assets" \
+            | jq -r '.[0].browser_download_url')"
+          curl -sL -o ${GITHUB_WORKSPACE}/mbed-os-fota-main-application/bootloader/bootloader.bin "${releaseAssetUrl}"
+
+      - name: Push changes
+        run: |
+          cd ${GITHUB_WORKSPACE}/mbed-os-fota-main-application/
+          git config user.name "Mbed OS FOTA Bootloader GH Action"
+          git config user.email "<>"
+          git add bootloader/bootloader.bin
+          git commit -m "Update bootloader to release: ${{ github.event.release.tag_name }}"
+          git push -f
